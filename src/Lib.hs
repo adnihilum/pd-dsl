@@ -1,15 +1,21 @@
+
 module Lib
   ( someFunc
   ) where
 
 import Control.Monad.Writer
 import Data.String
+import Data.List
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
 
-class PdAsm m where
-  object :: m ()
+class (Monad m) =>
+      PdAsm m
+  where
+  object :: (IsString str) => [str] -> m ()
 
-instance (MonadWriter str m, IsString str) => PdAsm m where
-    object = tell "x"
+instance (Monad m, MonadWriter str m, IsString str) => PdAsm m where
+  object :: (IsString str) => [str] -> m()
+  object params = tell $ "X" <> (mconcat $ intersperse " " params) <> ";\r\n"
+

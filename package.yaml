@@ -28,6 +28,8 @@ default-extensions:
   - FlexibleInstances
   - UndecidableInstances
   - FlexibleInstances
+  - ScopedTypeVariables
+  - InstanceSigs
 
 library:
   source-dirs: src
