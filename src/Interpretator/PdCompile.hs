@@ -1,6 +1,9 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Interpretator.PdCompile where
+module Interpretator.PdCompile
+  ( PdCompile
+  , runPdCompile
+  ) where
 
 import Control.Monad.Writer
 import DSL.Types
@@ -15,4 +18,10 @@ newtype (Monoid str, IsString str) =>
   deriving (Functor, Applicative, Monad, MonadWriter str)
 
 instance (Monoid str, IsString str) => PdAsm str (PdCompile str) where
-  object params = tell $ "X " <> (mconcat $ intersperse " " params) <> ";\r\n"
+  object = genRecord "X"
+  frame = genRecord "N"
+  array = genRecord "A"
+
+genRecord :: (IsString str, Monoid str) => str -> [str] -> PdCompile str ()
+genRecord chunkType params =
+  tell $ chunkType <> " " <> (mconcat $ intersperse " " params) <> ";\r\n"
