@@ -30,6 +30,10 @@ default-extensions:
   - FlexibleInstances
   - ScopedTypeVariables
   - InstanceSigs
+  - MultiParamTypeClasses
+  - FunctionalDependencies
+  - NoTemplateHaskell
+  - FlexibleContexts
 
 library:
   source-dirs: src
