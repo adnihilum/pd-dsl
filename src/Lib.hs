@@ -20,6 +20,8 @@ someFunc = do
       object ["aaaaaaaa", "123"]
       object ["zzzzzzz", "321"]
       object ["1", "2", "3"]
+
+
 {--
 newtype (IsString str, Monad m, MonadWriter str m) =>
      DotCompile str m a =
