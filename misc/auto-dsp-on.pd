@@ -1,0 +1,9 @@
+#N canvas 0 35 1920 1021 10;
+#X obj 294 31 loadbang;
+#X obj 234 85 del 1000;
+#X obj 243 29 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X msg 238 162 \; pd dsp 1;
+#X connect 0 0 1 0;
+#X connect 1 0 3 0;
+#X connect 2 0 1 0;
