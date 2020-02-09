@@ -17,36 +17,45 @@ class (IsString str, Monad m) =>
 
 data PortW =
   PortW
-    { _idx :: Int
+    { _nodeIdx :: Int
+    , _portIdx :: Int
     }
 
 makeFieldsNoPrefix ''PortW
 
-data InletSet
-  = InletSetNil
-  | InletSet1W
-      { _in1 :: PortW
-      }
-  | InletSet2W
-      { _in1 :: PortW
-      , _in2 :: PortW
-      }
+data InletSetNil =
+  InletSetNil
 
-makeFieldsNoPrefix ''InletSet
+data InletSet1W =
+  InletSet1W
+    { _in1 :: PortW
+    }
 
-data OutletSet
-  = OutletSetNil
-  | OutletSet1W
-      { _out1 :: PortW
-      }
+makeFieldsNoPrefix ''InletSet1W
 
-makeFieldsNoPrefix ''OutletSet
+data InletSet2W =
+  InletSet2W
+    { _in1 :: PortW
+    , _in2 :: PortW
+    }
 
-data Node =
+makeFieldsNoPrefix ''InletSet2W
+
+data OutletSetNil =
+  OutletSetNil
+
+data OutletSet1W =
+  OutletSet1W
+    { _out1 :: PortW
+    }
+
+makeFieldsNoPrefix ''OutletSet1W
+
+data Node ins outs =
   Node
     { _idx :: Int
-    , _inlets :: InletSet
-    , _outlets :: OutletSet
+    , _inlets :: ins
+    , _outlets :: outs
     }
 
 makeFieldsNoPrefix ''Node
