@@ -60,5 +60,14 @@ data Node ins outs =
 
 makeFieldsNoPrefix ''Node
 
+instance (HasOut1 o PortW) => HasOut1 (Node i o) PortW where
+  out1 = outlets . out1
+
+instance (HasIn1 i PortW) => HasIn1 (Node i o) PortW where
+  in1 = inlets . in1
+
+instance (HasIn2 i PortW) => HasIn2 (Node i o) PortW where
+  in2 = inlets . in2
+
 class HasObjIndexState m where
   incObjIndex :: m Int
