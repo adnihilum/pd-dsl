@@ -4,6 +4,7 @@
 module DSL.Language where
 
 import Control.Lens
+import DSL.Initializers
 import DSL.Types
 import Data.Maybe (fromMaybe)
 import Data.String
@@ -45,13 +46,9 @@ plusW ::
   -> m (Node InletSet2W OutletSet1W)
 plusW a b = do
   idx <- obj ["+~"]
-  let outlet =
-        Node
-          idx
-          (InletSet2W (PortW idx 0) (PortW idx 1))
-          (OutletSet1W $ PortW idx 0)
-  connect a (outlet ^. inlets . in1)
-  connect b (outlet ^. inlets . in1)
+  let outlet = nodeInit idx
+  connect a (outlet ^. in1)
+  connect b (outlet ^. in1)
   return outlet
 
 oscW ::
@@ -60,7 +57,7 @@ oscW ::
   -> m (Node InletSetNil OutletSet1W)
 oscW freq = do
   idx <- obj ["osc~"]
-  return $ Node idx InletSetNil (OutletSet1W (PortW idx 0))
+  return $ nodeInit idx
 
 dacW ::
      (PdAsm str m, HasObjIndexState m)
@@ -69,15 +66,15 @@ dacW ::
   -> m (Node InletSet2W OutletSetNil)
 dacW left right = do
   idx <- obj ["dac~"]
-  let node = Node idx (InletSet2W (PortW idx 0) (PortW idx 1)) OutletSetNil
-  connect left (node ^! inlets . in1)
-  connect right (node ^! inlets . in2)
+  let node = nodeInit idx
+  connect left (node ^! in1)
+  connect right (node ^! in2)
   return node
 
 test :: (PdAsm str m, HasObjIndexState m) => m ()
 test = do
   oscA <- oscW 480
   oscB <- oscW 640
-  plus <- plusW (oscA ^! outlets . out1) (oscB ^! outlets . out1)
-  dacW (plus ^! outlets . out1) (plus ^! outlets . out1)
+  plus <- plusW (oscA ^! out1) (oscB ^! out1)
+  dacW (plus ^! out1) (plus ^! out1)
   return ()
