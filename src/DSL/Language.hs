@@ -17,8 +17,8 @@ obj args = do
 --TODO:  we should illiminate possobilities of connecting an outlet to an outlet
 connect ::
      forall str m p. (PdAsm str m)
-  => PortW
-  -> PortW
+  => PortOW
+  -> PortIW
   -> m ()
 connect from to =
   object
@@ -30,19 +30,18 @@ connect from to =
     , showP $ to ^! nodeIdx
     , showP $ to ^! portIdx
     ]
-    --showP :: (HasIdx x Int) => x -> str
   where
     showP = fromString . show
 
 infixl 8 ^!
 
-a ^! b = fromMaybe undefined $ (a ^? b)
+a ^! b = fromMaybe undefined (a ^? b)
 
 {-# INLINE (^!) #-}
 plusW ::
      (PdAsm str m, HasObjIndexState m)
-  => PortW
-  -> PortW
+  => PortOW
+  -> PortOW
   -> m (Node InletSet2W OutletSet1W)
 plusW a b = do
   idx <- obj ["+~"]
@@ -61,8 +60,8 @@ oscW freq = do
 
 dacW ::
      (PdAsm str m, HasObjIndexState m)
-  => PortW
-  -> PortW
+  => PortOW
+  -> PortOW
   -> m (Node InletSet2W OutletSetNil)
 dacW left right = do
   idx <- obj ["dac~"]

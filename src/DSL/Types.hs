@@ -15,28 +15,36 @@ class (IsString str, Monad m) =>
   frame :: [str] -> m ()
   array :: [str] -> m ()
 
-data PortW =
-  PortW
+data PortIW =
+  PortIW
     { _nodeIdx :: Int
     , _portIdx :: Int
     }
 
-makeFieldsNoPrefix ''PortW
+makeFieldsNoPrefix ''PortIW
+
+data PortOW =
+  PortOW
+    { _nodeIdx :: Int
+    , _portIdx :: Int
+    }
+
+makeFieldsNoPrefix ''PortOW
 
 data InletSetNil =
   InletSetNil
 
 data InletSet1W =
   InletSet1W
-    { _in1 :: PortW
+    { _in1 :: PortIW
     }
 
 makeFieldsNoPrefix ''InletSet1W
 
 data InletSet2W =
   InletSet2W
-    { _in1 :: PortW
-    , _in2 :: PortW
+    { _in1 :: PortIW
+    , _in2 :: PortIW
     }
 
 makeFieldsNoPrefix ''InletSet2W
@@ -46,7 +54,7 @@ data OutletSetNil =
 
 data OutletSet1W =
   OutletSet1W
-    { _out1 :: PortW
+    { _out1 :: PortOW
     }
 
 makeFieldsNoPrefix ''OutletSet1W
@@ -60,13 +68,13 @@ data Node ins outs =
 
 makeFieldsNoPrefix ''Node
 
-instance (HasOut1 o PortW) => HasOut1 (Node i o) PortW where
+instance (HasOut1 o PortOW) => HasOut1 (Node i o) PortOW where
   out1 = outlets . out1
 
-instance (HasIn1 i PortW) => HasIn1 (Node i o) PortW where
+instance (HasIn1 i PortIW) => HasIn1 (Node i o) PortIW where
   in1 = inlets . in1
 
-instance (HasIn2 i PortW) => HasIn2 (Node i o) PortW where
+instance (HasIn2 i PortIW) => HasIn2 (Node i o) PortIW where
   in2 = inlets . in2
 
 class HasObjIndexState m where
