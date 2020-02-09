@@ -38,6 +38,11 @@ infixl 8 ^!
 a ^! b = fromMaybe undefined (a ^? b)
 
 {-# INLINE (^!) #-}
+infixl 7 ~>
+
+a ~> b = connect a b
+
+{-# INLINE (~>) #-}
 plusW ::
      (PdAsm str m, HasObjIndexState m)
   => PortOW
@@ -46,8 +51,8 @@ plusW ::
 plusW a b = do
   idx <- obj ["+~"]
   let outlet = nodeInit idx
-  connect a (outlet ^. in1)
-  connect b (outlet ^. in1)
+  a ~> outlet ^. in1
+  b ~> outlet ^. in1
   return outlet
 
 oscW ::
@@ -66,8 +71,8 @@ dacW ::
 dacW left right = do
   idx <- obj ["dac~"]
   let node = nodeInit idx
-  connect left (node ^! in1)
-  connect right (node ^! in2)
+  left ~> node ^! in1
+  right ~> node ^! in2
   return node
 
 test :: (PdAsm str m, HasObjIndexState m) => m ()
@@ -77,3 +82,11 @@ test = do
   plus <- plusW (oscA ^! out1) (oscB ^! out1)
   dacW (plus ^! out1) (plus ^! out1)
   return ()
+  {- TODO:
+
+objects: 
+  1. lop~
+  2. *~
+  3. clip~
+  
+-}
