@@ -5,11 +5,12 @@ module DSL.Language where
 
 import Control.Lens
 import DSL.Initializers
+import DSL.ObjectIndexState
 import DSL.Types
 import Data.Maybe (fromMaybe)
 import Data.String
 
-obj :: (PdAsm str m, HasObjIndexState m) => [str] -> m Int
+obj :: (PdAsm str m, HasObjectIndexState s m Int) => [str] -> m Int
 obj args = do
   object $ ["obj", "0", "0"] ++ args
   incObjIndex -- TODO:  increment indexes on all object not just on 'obj'
@@ -23,8 +24,6 @@ connect ::
 connect from to =
   object
     [ "connect"
-    , "0"
-    , "0"
     , showP $ from ^! nodeIdx
     , showP $ from ^! portIdx
     , showP $ to ^! nodeIdx
@@ -44,7 +43,7 @@ a ~> b = connect a b
 
 {-# INLINE (~>) #-}
 plusW ::
-     (PdAsm str m, HasObjIndexState m)
+     (PdAsm str m, HasObjectIndexState s m Int)
   => PortOW
   -> PortOW
   -> m (Node InletSet2W OutletSet1W)
@@ -52,11 +51,11 @@ plusW a b = do
   idx <- obj ["+~"]
   let outlet = nodeInit idx
   a ~> outlet ^. in1
-  b ~> outlet ^. in1
+  b ~> outlet ^. in2
   return outlet
 
 oscW ::
-     (PdAsm str m, HasObjIndexState m)
+     (PdAsm str m, HasObjectIndexState s m Int)
   => Int
   -> m (Node InletSetNil OutletSet1W)
 oscW freq = do
@@ -64,7 +63,7 @@ oscW freq = do
   return $ nodeInit idx
 
 dacW ::
-     (PdAsm str m, HasObjIndexState m)
+     (PdAsm str m, HasObjectIndexState s m Int)
   => PortOW
   -> PortOW
   -> m (Node InletSet2W OutletSetNil)
@@ -74,19 +73,3 @@ dacW left right = do
   left ~> node ^! in1
   right ~> node ^! in2
   return node
-
-test :: (PdAsm str m, HasObjIndexState m) => m ()
-test = do
-  oscA <- oscW 480
-  oscB <- oscW 640
-  plus <- plusW (oscA ^! out1) (oscB ^! out1)
-  dacW (plus ^! out1) (plus ^! out1)
-  return ()
-  {- TODO:
-
-objects: 
-  1. lop~
-  2. *~
-  3. clip~
-  
--}

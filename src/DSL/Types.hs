@@ -77,5 +77,3 @@ instance (HasIn1 i PortIW) => HasIn1 (Node i o) PortIW where
 instance (HasIn2 i PortIW) => HasIn2 (Node i o) PortIW where
   in2 = inlets . in2
 
-class HasObjIndexState m where
-  incObjIndex :: m Int
