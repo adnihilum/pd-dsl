@@ -32,18 +32,3 @@ test = do
   plus <- plusW (oscA ^! out1) (oscB ^! out1)
   dacW (plus ^! out1) (plus ^! out1)
   return ()
-  {- TODO:
-
-objects: 
-  1. lop~
-  2. *~
-  3. clip~
-  
--}
-{--
-newtype (IsString str, Monad m, MonadWriter str m) =>
-     DotCompile str m a =
-  DotCompile
-    { runDotCompile :: m a
-    } deriving (Functor, Applicative, Monad, MonadWriter str)
---}

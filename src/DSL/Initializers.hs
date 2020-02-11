@@ -20,6 +20,9 @@ instance InletSetInitializer InletSet1W where
 instance InletSetInitializer InletSet2W where
   inletSetInit idx = InletSet2W (PortIW idx 0) (PortIW idx 1)
 
+instance InletSetInitializer InletSet1S where
+  inletSetInit idx = InletSet1S (PortIS idx 0)
+
 class OutletSetInitializer outs where
   outletSetInit :: Int -> outs
 
@@ -28,3 +31,6 @@ instance OutletSetInitializer OutletSetNil where
 
 instance OutletSetInitializer OutletSet1W where
   outletSetInit idx = OutletSet1W (PortOW idx 0)
+
+instance OutletSetInitializer OutletSet1S where
+  outletSetInit idx = OutletSet1S (PortOS idx 0)
