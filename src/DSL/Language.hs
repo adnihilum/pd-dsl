@@ -143,6 +143,18 @@ loadbang ::
   => m (Node InletSetNil OutletSet1S)
 loadbang = nodeInit <$> obj ["loadbang"]
 
+msg ::
+     (PdAsm str m, HasObjectIndexState s m Int)
+  => str --NOTE:  looks like we have to choose an absolute type here, in order to do stringy stuff
+  -> PortOS
+  -> m (Node InletSet1S OutletSet1S)
+msg messageData input = do
+  object $ ["msg", "0", "0", messageData] --TODO: add escaping of ';'
+  idx <- incObjIndex
+  let node = nodeInit idx
+  input ~> node ^! in1
+  return node
+
 -- tools
 show' :: (Show a, IsString str) => a -> str
 show' x = fromString $ show x
