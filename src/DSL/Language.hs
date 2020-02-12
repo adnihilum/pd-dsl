@@ -25,6 +25,9 @@ instance Connectable PortOW PortIW where
 instance Connectable PortOS PortIS where
   connect = connect''
 
+instance Connectable PortOS PortIW where
+  connect = connect''
+
 connect'' ::
      ( PdAsm str m
      , HasNodeIdx pO Int
@@ -54,12 +57,7 @@ infixl 7 ~>
 a ~> b = connect a b
 
 {-# INLINE (~>) #-}
-op2iw1ow ::
-     (PdAsm str m, HasObjectIndexState s m Int)
-  => str
-  -> PortOW
-  -> PortOW
-  -> m (Node InletSet2W OutletSet1W)
+op2iw1ow :: str -> Op2iw1ow str s ao1 ao2 m
 op2iw1ow opName a b = do
   idx <- obj [opName]
   let node = nodeInit idx
@@ -67,27 +65,31 @@ op2iw1ow opName a b = do
   b ~> node ^! in2
   return node
 
-type Op2iw1ow str s m
-   = (PdAsm str m, HasObjectIndexState s m Int) =>
-       PortOW -> PortOW -> m (Node InletSet2W OutletSet1W)
+type Op2iw1ow str s ao1 ao2 m
+   = ( PdAsm str m
+     , HasObjectIndexState s m Int
+     , Connectable ao1 PortIW
+     , Connectable ao2 PortIW
+     ) =>
+       ao1 -> ao2 -> m (Node InletSet2W OutletSet1W)
 
 -- operators on wave
-plusW :: Op2iw1ow str s m
+plusW :: Op2iw1ow str ao1 ao2 s m
 plusW = op2iw1ow "+~"
 
-minusW :: Op2iw1ow str s m
+minusW :: Op2iw1ow str ao1 ao2 s m
 minusW = op2iw1ow "-~"
 
-multW :: Op2iw1ow str s m
+multW :: Op2iw1ow str ao1 ao2 s m
 multW = op2iw1ow "*~"
 
-divW :: Op2iw1ow str s m
+divW :: Op2iw1ow str ao1 ao2 s m
 divW = op2iw1ow "/~"
 
-maxW :: Op2iw1ow str s m
+maxW :: Op2iw1ow str ao1 ao2 s m
 maxW = op2iw1ow "max~"
 
-minW :: Op2iw1ow str s m
+minW :: Op2iw1ow str ao1 ao2 s m
 minW = op2iw1ow "min~"
 
 oscW ::
@@ -101,19 +103,25 @@ oscW freq = do
 lopW ::
      (PdAsm str m, HasObjectIndexState s m Int)
   => Float
-  -> m (Node InletSetNil OutletSet1W)
-lopW cutoffFreq = do
+  -> PortOW
+  -> m (Node InletSet1W OutletSet1W)
+lopW cutoffFreq input = do
   idx <- obj ["lop~", show' cutoffFreq]
-  return $ nodeInit idx
+  let node = nodeInit idx
+  input ~> node ^! in1
+  return $ node
 
 clipW ::
      (PdAsm str m, HasObjectIndexState s m Int)
   => Float
   -> Float
+  -> PortOW
   -> m (Node InletSet1W OutletSet1W)
-clipW minLevel maxLevel = do
+clipW minLevel maxLevel input = do
   idx <- obj ["clip~", show' minLevel, show' maxLevel]
-  return $ nodeInit idx
+  let node = nodeInit idx
+  input ~> node ^! in1
+  return $ node
 
 dacW ::
      (PdAsm str m, HasObjectIndexState s m Int)
