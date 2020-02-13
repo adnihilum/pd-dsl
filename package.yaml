@@ -36,6 +36,7 @@ default-extensions:
   - NoTemplateHaskell
   - FlexibleContexts
   - DuplicateRecordFields
+  - MonoLocalBinds
   
 library:
   source-dirs: src

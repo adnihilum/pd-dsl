@@ -19,6 +19,16 @@ obj args = do
 class Connectable a b where
   connect :: (PdAsm str m) => a -> b -> m ()
 
+instance ( HasOut1' o1 a
+         , Connectable a b
+         , HasNodeIdx b Int
+         , HasPortIdx b Int
+         , HasNodeIdx a Int
+         , HasPortIdx a Int
+         ) =>
+         Connectable (Node i o1) b where
+  connect a = connect'' (a ^! out1)
+
 instance Connectable PortOW PortIW where
   connect = connect''
 
@@ -101,9 +111,9 @@ oscW freq = do
   return $ nodeInit idx
 
 lopW ::
-     (PdAsm str m, HasObjectIndexState s m Int)
+     (PdAsm str m, HasObjectIndexState s m Int, Connectable signal PortIW)
   => Float
-  -> PortOW
+  -> signal
   -> m (Node InletSet1W OutletSet1W)
 lopW cutoffFreq input = do
   idx <- obj ["lop~", show' cutoffFreq]
@@ -112,10 +122,10 @@ lopW cutoffFreq input = do
   return $ node
 
 clipW ::
-     (PdAsm str m, HasObjectIndexState s m Int)
+     (PdAsm str m, HasObjectIndexState s m Int, Connectable signal PortIW)
   => Float
   -> Float
-  -> PortOW
+  -> signal
   -> m (Node InletSet1W OutletSet1W)
 clipW minLevel maxLevel input = do
   idx <- obj ["clip~", show' minLevel, show' maxLevel]
@@ -124,9 +134,13 @@ clipW minLevel maxLevel input = do
   return $ node
 
 dacW ::
-     (PdAsm str m, HasObjectIndexState s m Int)
-  => PortOW
-  -> PortOW
+     ( PdAsm str m
+     , HasObjectIndexState s m Int
+     , Connectable left PortIW
+     , Connectable right PortIW
+     )
+  => left
+  -> right
   -> m (Node InletSet2W OutletSetNil)
 dacW left right = do
   idx <- obj ["dac~"]
@@ -136,9 +150,9 @@ dacW left right = do
   return node
 
 del ::
-     (PdAsm str m, HasObjectIndexState s m Int)
+     (PdAsm str m, HasObjectIndexState s m Int, Connectable argIn PortIS)
   => Float
-  -> PortOS
+  -> argIn
   -> m (Node InletSet1S OutletSet1S)
 del delayMs bang = do
   idx <- obj ["del", show' delayMs, "1", "msec"]
@@ -152,9 +166,9 @@ loadbang ::
 loadbang = nodeInit <$> obj ["loadbang"]
 
 msg ::
-     (PdAsm str m, HasObjectIndexState s m Int)
+     (PdAsm str m, HasObjectIndexState s m Int, Connectable argIn PortIS)
   => str --NOTE:  looks like we have to choose an absolute type here, in order to do stringy stuff
-  -> PortOS
+  -> argIn
   -> m (Node InletSet1S OutletSet1S)
 msg messageData input = do
   object $ ["msg", "0", "0", messageData] --TODO: add escaping of ';'

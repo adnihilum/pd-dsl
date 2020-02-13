@@ -23,12 +23,15 @@ someFunc = do
       frame ["canvas", "0", "0", "100", "100", "10"]
       autoDspOn
       signal <- busySignal
-      output <- volume 0.1 (signal ^! out1)
+      output <- volume 0.1 signal
       dacW output output
       return ()
 
 volume ::
-     (PdAsm str m, HasObjectIndexState s m Int) => Float -> PortOW -> m PortOW
+     (PdAsm str m, HasObjectIndexState s m Int, Connectable signal PortIW)
+  => Float
+  -> signal
+  -> m PortOW
 volume volValue input = do
   volC <- floatConst volValue
   m <- multW volC input
@@ -36,7 +39,7 @@ volume volValue input = do
 
 busySignal ::
      (PdAsm str m, HasObjectIndexState s m Int)
-  => m (Node InletSet2W OutletSet1W)
+  => m (Node InletSet2W OutletSet1W) --TODO: add custom node constructor (with imbedded inlets and outlets)
 busySignal = do
   signal <- signalG
   cutOff <- cutOffG
@@ -45,24 +48,16 @@ busySignal = do
     signalG = do
       osc1 <- oscW 480
       osc2 <- oscW 620
-      pl <- plusW (osc1 ^! out1) (osc2 ^! out1)
-      return $ pl ^! out1
+      plusW osc1 osc2
     cutOffG = do
       osc <- oscW 2
       oscAmp <- floatConst 10000
-      oscA <-
-        multW (osc ^! out1) oscAmp >>= (\x -> clipW 0 1 (x ^! out1)) >>=
-        (\y -> lopW 100 (y ^! out1))
-      return $ oscA ^! out1
+      multW osc oscAmp >>= clipW 0 1 >>= lopW 100
 
 autoDspOn :: (PdAsm str m, HasObjectIndexState s m Int) => m ()
-autoDspOn = do
-  lb <- loadbang
-  dl <- del 1000 $ lb ^! out1
-  msg "\\; pd dsp 1" $ dl ^! out1
-  return ()
+autoDspOn = void $ loadbang >>= del 1000 >>= msg "\\; pd dsp 1"
 
-floatConst :: (PdAsm str m, HasObjectIndexState s m Int) => Float -> m (PortOS)
+floatConst :: (PdAsm str m, HasObjectIndexState s m Int) => Float -> m PortOS
 floatConst value = do
   lb <- loadbang
   m <- msg (fromString $ show $ value) $ lb ^! out1
