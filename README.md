@@ -1,5 +1,5 @@
 # pd-dsl
-This is an dsl package for building pd files.
+This is an dsl package for building pd files (for pure data application).
 
 
 
@@ -7,4 +7,4 @@ This is an dsl package for building pd files.
 
 pure data file format: https://puredata.info/docs/developer/PdFileFormat
 
-procedural http://aspress.co.uk/sd/practical02.html
+code from a book about procedural sound: http://aspress.co.uk/sd/practical02.html
