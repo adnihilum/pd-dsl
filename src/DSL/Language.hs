@@ -5,19 +5,29 @@
 module DSL.Language where
 
 import Control.Lens
+import Control.Monad
 import DSL.Initializers
 import DSL.ObjectIndexState
 import DSL.Types
 import Data.Maybe (fromMaybe)
 import Data.String
 
-obj :: (PdAsm str m, HasObjectIndexState s m Int) => [str] -> m Int
+obj ::
+     ( PdAsm str m
+     , HasObjectIndexState s m Int
+     , InletSetInitializer ins
+     , OutletSetInitializer outs
+     )
+  => [str]
+  -> m (m (Node ins outs))
 obj args = do
   object $ ["obj", "0", "0"] ++ args
-  incObjIndex -- TODO:  increment indexes on all object not just on 'obj'
+  idx <- incObjIndex -- TODO:  increment indexes on all object not just on 'obj'
+  let node = nodeInit idx
+  return $ return node
 
 class Connectable a b where
-  connect :: (PdAsm str m) => a -> b -> m ()
+  connect :: (PdAsm str m) => m a -> m b -> m ()
 
 instance ( HasOut1' o1 a
          , Connectable a b
@@ -45,23 +55,31 @@ connect'' ::
      , HasNodeIdx pI Int
      , HasPortIdx pI Int
      )
-  => pO
-  -> pI
+  => m pO
+  -> m pI
   -> m ()
-connect'' from to =
+connect'' from to = do
+  from' <- from
+  to' <- to
   object
     [ "connect"
-    , show' $ from ^! nodeIdx
-    , show' $ from ^! portIdx
-    , show' $ to ^! nodeIdx
-    , show' $ to ^! portIdx
+    , show' $ from' ^!! nodeIdx
+    , show' $ from' ^!! portIdx
+    , show' $ to' ^!! nodeIdx
+    , show' $ to' ^!! portIdx
     ]
 
 infixl 8 ^!
 
-a ^! b = fromMaybe undefined (a ^? b)
+(^!) :: (Monad m) => (m a) -> Lens' a b -> m b
+ma ^! b = (^!! b) <$> ma
 
 {-# INLINE (^!) #-}
+infixl 8 ^!!
+
+a ^!! b = fromMaybe undefined (a ^? b)
+
+{-# INLINE (^!!) #-}
 infixl 7 ~>
 
 a ~> b = connect a b
@@ -69,11 +87,10 @@ a ~> b = connect a b
 {-# INLINE (~>) #-}
 op2iw1ow :: str -> Op2iw1ow str s ao1 ao2 m
 op2iw1ow opName a b = do
-  idx <- obj [opName]
-  let node = nodeInit idx
+  node <- obj [opName]
   a ~> node ^! in1
   b ~> node ^! in2
-  return node
+  node
 
 type Op2iw1ow str s ao1 ao2 m
    = ( PdAsm str m
@@ -81,7 +98,7 @@ type Op2iw1ow str s ao1 ao2 m
      , Connectable ao1 PortIW
      , Connectable ao2 PortIW
      ) =>
-       ao1 -> ao2 -> m (Node InletSet2W OutletSet1W)
+       m ao1 -> m ao2 -> m (Node InletSet2W OutletSet1W)
 
 -- operators on wave
 plusW :: Op2iw1ow str ao1 ao2 s m
@@ -106,32 +123,28 @@ oscW ::
      (PdAsm str m, HasObjectIndexState s m Int)
   => Float
   -> m (Node InletSetNil OutletSet1W)
-oscW freq = do
-  idx <- obj ["osc~", show' freq]
-  return $ nodeInit idx
+oscW freq = join $ obj ["osc~", show' freq]
 
 lopW ::
      (PdAsm str m, HasObjectIndexState s m Int, Connectable signal PortIW)
   => Float
-  -> signal
+  -> m signal
   -> m (Node InletSet1W OutletSet1W)
 lopW cutoffFreq input = do
-  idx <- obj ["lop~", show' cutoffFreq]
-  let node = nodeInit idx
+  node <- obj ["lop~", show' cutoffFreq]
   input ~> node ^! in1
-  return $ node
+  node
 
 clipW ::
      (PdAsm str m, HasObjectIndexState s m Int, Connectable signal PortIW)
   => Float
   -> Float
-  -> signal
+  -> m signal
   -> m (Node InletSet1W OutletSet1W)
 clipW minLevel maxLevel input = do
-  idx <- obj ["clip~", show' minLevel, show' maxLevel]
-  let node = nodeInit idx
+  node <- obj ["clip~", show' minLevel, show' maxLevel]
   input ~> node ^! in1
-  return $ node
+  node
 
 dacW ::
      ( PdAsm str m
@@ -139,43 +152,44 @@ dacW ::
      , Connectable left PortIW
      , Connectable right PortIW
      )
-  => left
-  -> right
+  => m left
+  -> m right
   -> m (Node InletSet2W OutletSetNil)
 dacW left right = do
-  idx <- obj ["dac~"]
-  let node = nodeInit idx
+  node <- obj ["dac~"]
   left ~> node ^! in1
   right ~> node ^! in2
-  return node
+  node
 
 del ::
      (PdAsm str m, HasObjectIndexState s m Int, Connectable argIn PortIS)
   => Float
-  -> argIn
+  -> m argIn
   -> m (Node InletSet1S OutletSet1S)
 del delayMs bang = do
-  idx <- obj ["del", show' delayMs, "1", "msec"]
-  let node = nodeInit idx
+  node <- obj ["del", show' delayMs, "1", "msec"]
   bang ~> node ^! in1
-  return node
+  node
 
 loadbang ::
      (PdAsm str m, HasObjectIndexState s m Int)
   => m (Node InletSetNil OutletSet1S)
-loadbang = nodeInit <$> obj ["loadbang"]
+loadbang = join $ obj ["loadbang"]
 
 msg ::
      (PdAsm str m, HasObjectIndexState s m Int, Connectable argIn PortIS)
   => str --NOTE:  looks like we have to choose an absolute type here, in order to do stringy stuff
-  -> argIn
+  -> m argIn
   -> m (Node InletSet1S OutletSet1S)
 msg messageData input = do
   object $ ["msg", "0", "0", messageData] --TODO: add escaping of ';'
   idx <- incObjIndex
-  let node = nodeInit idx
+  let node = return $ nodeInit idx
   input ~> node ^! in1
-  return node
+  node
+
+var :: (PdAsm String m, HasObjectIndexState s m Int) => m a -> m (m a)
+var ma = return <$> ma
 
 -- tools
 show' :: (Show a, IsString str) => a -> str

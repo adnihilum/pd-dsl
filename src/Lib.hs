@@ -22,43 +22,30 @@ someFunc = do
     graph = do
       frame ["canvas", "0", "0", "100", "100", "10"]
       autoDspOn
-      signal <- busySignal
-      output <- volume 0.1 signal
+      output <- var $ volume 0.1 busySignal
       dacW output output
       return ()
 
 volume ::
      (PdAsm str m, HasObjectIndexState s m Int, Connectable signal PortIW)
   => Float
-  -> signal
-  -> m PortOW
-volume volValue input = do
-  volC <- floatConst volValue
-  m <- multW volC input
-  return $ m ^! out1
+  -> m signal
+  -> m (Node InletSet2W OutletSet1W)
+volume volValue input = multW (floatConst volValue) input
 
 busySignal ::
      (PdAsm str m, HasObjectIndexState s m Int)
   => m (Node InletSet2W OutletSet1W) --TODO: add custom node constructor (with imbedded inlets and outlets)
 busySignal = do
-  signal <- signalG
-  cutOff <- cutOffG
+  let signal = plusW (oscW 480) (oscW 620)
+  let cutOff = lopW 100 $ clipW 0 1 $ multW (oscW 2) (floatConst 10000)
   multW signal cutOff
-  where
-    signalG = do
-      osc1 <- oscW 480
-      osc2 <- oscW 620
-      plusW osc1 osc2
-    cutOffG = do
-      osc <- oscW 2
-      oscAmp <- floatConst 10000
-      multW osc oscAmp >>= clipW 0 1 >>= lopW 100
 
 autoDspOn :: (PdAsm str m, HasObjectIndexState s m Int) => m ()
-autoDspOn = void $ loadbang >>= del 1000 >>= msg "\\; pd dsp 1"
+autoDspOn = void $ msg "\\; pd dsp 1" $ del 1000 $ loadbang
 
-floatConst :: (PdAsm str m, HasObjectIndexState s m Int) => Float -> m PortOS
-floatConst value = do
-  lb <- loadbang
-  m <- msg (fromString $ show $ value) $ lb ^! out1
-  return $ m ^! out1
+floatConst ::
+     (PdAsm str m, HasObjectIndexState s m Int)
+  => Float
+  -> m (Node InletSet1S OutletSet1S)
+floatConst value = msg (fromString $ show $ value) $ loadbang
