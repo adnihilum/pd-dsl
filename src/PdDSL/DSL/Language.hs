@@ -1,3 +1,4 @@
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE DuplicateRecordFields #-}
@@ -7,7 +8,9 @@ module PdDSL.DSL.Language where
 import Control.Lens
 import Control.Monad
 import Data.Maybe (fromMaybe)
+import Data.Proxy
 import Data.String
+import GHC.TypeLits
 import PdDSL.DSL.Initializers
 import PdDSL.DSL.ObjectIndexState
 import PdDSL.DSL.Types
@@ -101,6 +104,7 @@ type Op2iw1ow str s ao1 ao2 m
        m ao1 -> m ao2 -> m (Node InletSet2W OutletSet1W)
 
 -- operators on wave
+-- TODO: create infix aliases for those operators
 plusW :: Op2iw1ow str ao1 ao2 s m
 plusW = op2iw1ow "+~"
 
@@ -119,11 +123,20 @@ maxW = op2iw1ow "max~"
 minW :: Op2iw1ow str ao1 ao2 s m
 minW = op2iw1ow "min~"
 
-oscW ::
+oscWC ::
      (PdAsm str m, HasObjectIndexState s m Int)
   => Float
-  -> m (Node InletSetNil OutletSet1W)
-oscW freq = join $ obj ["osc~", show' freq]
+  -> m (Node InletSet1S OutletSet1W)
+oscWC freq = oscW $ float2S freq
+
+oscW ::
+     (PdAsm str m, HasObjectIndexState s m Int, Connectable freq PortIS)
+  => m freq
+  -> m (Node InletSet1S OutletSet1W)
+oscW freq = do
+  node <- obj ["osc~"]
+  freq ~> node ^! in1
+  node
 
 lopW ::
      (PdAsm str m, HasObjectIndexState s m Int, Connectable signal PortIW)
@@ -161,6 +174,30 @@ dacW left right = do
   right ~> node ^! in2
   node
 
+vlineW ::
+     (PdAsm str m, HasObjectIndexState s m Int, Connectable control PortIS)
+  => m control
+  -> m (Node InletSet1S OutletSet1W)
+vlineW control = do
+  node <- obj ["vline~"]
+  control ~> node ^! in1
+  node
+
+repeatFloat ::
+     ( KnownNat n
+     , PdAsm str m
+     , HasObjectIndexState s m Int
+     , Connectable input PortIS
+     )
+  => Proxy n
+  -> m input
+  -> m (Node InletSet1S (OutletSetNS n))
+repeatFloat proxy input = do
+  let len = natVal proxy
+  node <- obj $ ["trigger"] <> (const "float" <$> [0 .. len])
+  input ~> node ^! in1
+  node
+
 del ::
      (PdAsm str m, HasObjectIndexState s m Int, Connectable argIn PortIS)
   => Float
@@ -190,6 +227,12 @@ msg messageData input = do
 
 var :: (PdAsm String m, HasObjectIndexState s m Int) => m a -> m (m a)
 var ma = return <$> ma
+
+float2S ::
+     (PdAsm str m, HasObjectIndexState s m Int)
+  => Float
+  -> m (Node InletSet1S OutletSet1S)
+float2S value = msg (fromString $ show $ value) $ loadbang
 
 -- tools
 show' :: (Show a, IsString str) => a -> str

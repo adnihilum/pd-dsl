@@ -1,3 +1,6 @@
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
@@ -6,6 +9,7 @@ module PdDSL.DSL.Types where
 import Control.Lens
 import Control.Monad
 import Data.String
+import GHC.TypeLits
 
 class (IsString str, Monad m) =>
       PdAsm str m
@@ -89,6 +93,13 @@ data OutletSet1S =
     }
 
 makeFieldsNoPrefix ''OutletSet1S
+
+newtype OutletSetNS (n :: Nat) =
+  OutletSetNS
+    { _outs :: [PortOS]
+    }
+
+makeFieldsNoPrefix ''OutletSetNS
 
 data Node ins outs =
   Node

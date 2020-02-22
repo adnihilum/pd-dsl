@@ -1,5 +1,7 @@
 module PdDSL.DSL.Initializers where
 
+import Data.Proxy
+import GHC.TypeLits
 import PdDSL.DSL.Types
 
 nodeInit ::
@@ -34,3 +36,8 @@ instance OutletSetInitializer OutletSet1W where
 
 instance OutletSetInitializer OutletSet1S where
   outletSetInit idx = OutletSet1S (PortOS idx 0)
+
+instance (KnownNat n) => OutletSetInitializer (OutletSetNS n) where
+  outletSetInit idx =
+    OutletSetNS $
+    (PortOS idx) <$> [0 .. (fromInteger $ natVal (Proxy :: Proxy n))]
