@@ -74,7 +74,7 @@ connect'' from to = do
 
 infixl 8 ^!
 
-(^!) :: (Monad m) => (m a) -> Lens' a b -> m b
+(^!) :: (Monad m) => (m a) -> Getter a b -> m b
 ma ^! b = (^!! b) <$> ma
 
 {-# INLINE (^!) #-}

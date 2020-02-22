@@ -25,8 +25,8 @@ busySignal ::
      (PdAsm str m, HasObjectIndexState s m Int)
   => m (Node InletSet2W OutletSet1W) --TODO: add custom node constructor (with imbedded inlets and outlets)
 busySignal = do
-  let signal = plusW (oscW 480) (oscW 620)
-  let cutOff = lopW 100 $ clipW 0 1 $ multW (oscW 2) (floatConst 10000)
+  let signal = plusW (oscWC 480) (oscWC 620)
+  let cutOff = lopW 100 $ clipW 0 1 $ multW (oscWC 2) (floatConst 10000)
   multW signal cutOff
 
 floatConst ::
