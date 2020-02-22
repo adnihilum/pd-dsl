@@ -2,15 +2,15 @@
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module DSL.Language where
+module PdDSL.DSL.Language where
 
 import Control.Lens
 import Control.Monad
-import DSL.Initializers
-import DSL.ObjectIndexState
-import DSL.Types
 import Data.Maybe (fromMaybe)
 import Data.String
+import PdDSL.DSL.Initializers
+import PdDSL.DSL.ObjectIndexState
+import PdDSL.DSL.Types
 
 obj ::
      ( PdAsm str m

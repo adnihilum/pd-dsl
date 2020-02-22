@@ -1,6 +1,6 @@
-module DSL.Initializers where
+module PdDSL.DSL.Initializers where
 
-import DSL.Types
+import PdDSL.DSL.Types
 
 nodeInit ::
      (InletSetInitializer ins, OutletSetInitializer outs)

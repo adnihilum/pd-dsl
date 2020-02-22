@@ -1,6 +1,6 @@
 {-# LANGUAGE ConstraintKinds #-}
 
-module DSL.ObjectIndexState where
+module PdDSL.DSL.ObjectIndexState where
 
 import Control.Lens
 import Control.Monad.State

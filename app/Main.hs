@@ -1,6 +1,11 @@
 module Main where
 
-import Lib
+import qualified BusySignal
+import Data.List
+import Data.String
+import PdDSL
 
 main :: IO ()
-main = someFunc
+main = putStrLn $ compile graph
+  where
+    graph = BusySignal.graph

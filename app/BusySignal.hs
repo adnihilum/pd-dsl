@@ -1,27 +1,18 @@
-module Lib
-  ( someFunc
+module BusySignal
+  ( graph
   ) where
 
-import Control.Monad.Identity
-import Control.Monad.State
-import Control.Monad.Writer
-import DSL.Language
-import DSL.ObjectIndexState
-import DSL.Types
+import AutoDspOn
 import Data.List
 import Data.String
-import Interpretator.PdCompile
+import PdDSL
 
-someFunc :: IO ()
-someFunc = do
-  putStrLn $ compile graph
-  where
-    graph :: (PdAsm String m, HasObjectIndexState s m Int) => m ()
-    graph = do
-      autoDspOn
-      output <- var $ volume 0.1 busySignal
-      dacW output output
-      return ()
+graph :: (PdAsm String m, HasObjectIndexState s m Int) => m ()
+graph = do
+  autoDspOn
+  output <- var $ volume 0.1 busySignal
+  dacW output output
+  return ()
 
 volume ::
      (PdAsm str m, HasObjectIndexState s m Int, Connectable signal PortIW)
@@ -37,9 +28,6 @@ busySignal = do
   let signal = plusW (oscW 480) (oscW 620)
   let cutOff = lopW 100 $ clipW 0 1 $ multW (oscW 2) (floatConst 10000)
   multW signal cutOff
-
-autoDspOn :: (PdAsm str m, HasObjectIndexState s m Int) => m ()
-autoDspOn = void $ msg "\\; pd dsp 1" $ del 1000 $ loadbang
 
 floatConst ::
      (PdAsm str m, HasObjectIndexState s m Int)

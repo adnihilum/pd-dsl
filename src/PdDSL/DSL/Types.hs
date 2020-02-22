@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module DSL.Types where
+module PdDSL.DSL.Types where
 
 import Control.Lens
 import Control.Monad

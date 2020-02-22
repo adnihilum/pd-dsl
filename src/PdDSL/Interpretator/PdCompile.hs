@@ -2,7 +2,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Interpretator.PdCompile
+module PdDSL.Interpretator.PdCompile
   ( PdCompile
   , runPdCompile
   , ObjectIndexState(..)
@@ -12,10 +12,10 @@ module Interpretator.PdCompile
 import Control.Lens
 import Control.Monad.State
 import Control.Monad.Writer
-import DSL.ObjectIndexState
-import DSL.Types
 import Data.List
 import Data.String
+import PdDSL.DSL.ObjectIndexState
+import PdDSL.DSL.Types
 
 newtype (Monoid str, IsString str) =>
         PdCompile str a =
