@@ -14,13 +14,10 @@ import Interpretator.PdCompile
 
 someFunc :: IO ()
 someFunc = do
-  let result =
-        runWriter $ (runStateT $ runPdCompile $ graph) (ObjectIndexState (-1)) -- TODO: move monad construction into PdCompile module
-  putStrLn $ snd $ result
+  putStrLn $ compile graph
   where
     graph :: (PdAsm String m, HasObjectIndexState s m Int) => m ()
     graph = do
-      frame ["canvas", "0", "0", "100", "100", "10"]
       autoDspOn
       output <- var $ volume 0.1 busySignal
       dacW output output
